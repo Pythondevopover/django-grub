@@ -1,0 +1,1 @@
+web: gunicorm basic.wsgs --log-file -
