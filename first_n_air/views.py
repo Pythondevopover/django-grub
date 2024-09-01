@@ -1,9 +1,13 @@
 from django.shortcuts import redirect, render
 from .models import Category, Sneakers, Advertising, Buy
-from .forms import ContactForm, RegisterForm, ChoiceForm
+from .forms import *
 import random
 import numpy as np
-
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.views import LoginView
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 def home(request):
     ctg = Category.objects.all()
     advertising = Advertising.objects.all()
@@ -44,15 +48,50 @@ def products(request, slug=None):
     return render(request, 'blog/products.html', ctx)
 
 def register(request):
+    """Handle user registration."""
     ctg = Category.objects.all()
-    form = RegisterForm()
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('home')
-    ctx = {'ctg': ctg, 'form': form}
-    return render(request, 'blog/register.html', ctx)
+            user = form.save()
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=user.username, password=raw_password)
+            if user is not None:
+                login(request, user)
+                return redirect('home')
+    else:
+        form = RegisterForm()
+    return render(request, 'blog/register.html', {'form': form, 'ctg': ctg})
+def login_view(request):
+    """Handle user login."""
+    ctg = Category.objects.all()
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('home')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'blog/login.html', {'form': form, 'ctg': ctg})
+
+def user_login(request):
+    """Handle user login."""
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data.get('email')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=email, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('home')
+    else:
+        form = LoginForm()
+    return render(request, 'blog/login.html', {'form': form})
 
 def single(request, pk=None):
     ctg = Category.objects.all()
@@ -78,3 +117,13 @@ def single(request, pk=None):
         'sneakers': sneakers
     }
     return render(request, 'blog/single.html', ctx)
+
+@login_required
+def user_logout(request):
+    """Handle user logout."""
+    logout(request)
+    return redirect('home')
+
+class CustomLoginView(LoginView):
+    template_name = 'blog/login.html'
+    authentication_form = AuthenticationForm
