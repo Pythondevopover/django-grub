@@ -87,4 +87,15 @@ class Register(models.Model):
 
     def __str__(self):
         return self.name
+
+class ContactUS(models.Model):
+    name = models.CharField(max_length=60)
+    Lastname = models.CharField(max_length=60)
+    email = models.EmailField(blank=True)
+    password = models.CharField(max_length=30)
+    phone = models.CharField(max_length=32)
+    massege = models.TextField()
+
+    def __str__(self):
+        return self.name
     

@@ -21,6 +21,6 @@ class ContactForm(forms.ModelForm):
 
 
     class Meta:
-        model = Register
+        model = ContactUS
         fields = '__all__'
         exclude = ['password', 'Lastname', 'phone']
